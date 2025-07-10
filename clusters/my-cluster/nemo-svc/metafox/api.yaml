@@ -39,7 +39,7 @@ spec:
           image: drashkko/metafox-api:latest
           imagePullPolicy: Always
           securityContext:
-            runAsNonRoot: true
+            runAsNonRoot: false
             runAsUser: 1000
             allowPrivilegeEscalation: false
             capabilities:
