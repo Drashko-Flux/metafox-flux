@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: nemo-svc
+  labels:
+    app: nemo
+    type: backend
+    deployment: redis
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 1 # Ensure at least one pod is always available
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      pod: redis
+  template:
+    metadata:
+      labels:
+        app: nemo
+        type: backend
+        pod: redis
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: pod
+                    operator: In
+                    values:
+                      - redis
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+        - name: redis
+          image: redis:latest
+          imagePullPolicy: Always
+          ports:
+            - name: redis-port
+              containerPort: 6379
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: metafox-config
+            - secretRef:
+                name: metafox-secrets
+          env:
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: REDIS_PORT
+            - name: REDIS_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: REDIS_DB
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: metafox-secrets
+                  key: redis_password
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+      volumes:
+        - name: redis-data
+          emptyDir:
+            sizeLimit: "10Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-backend-service
+  namespace: nemo-svc
+  labels:
+    app: nemo
+    type: backend
+    service: redis
+spec:
+  selector:
+    app: nemo
+    type: backend
+    pod: redis
+  ports:
+    - name: redis-port
+      port: 6379
+      targetPort: 6379
+      protocol: TCP
+      nodePort: 30604
+  type: NodePort

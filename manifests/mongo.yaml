@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo
+  namespace: nemo-svc
+  labels:
+    app: nemo
+    type: backend
+    pod: mongo
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 1 # Ensure at least one pod is always available
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      pod: mongo
+  template:
+    metadata:
+      labels:
+        app: nemo
+        type: backend
+        pod: mongo
+    spec:
+      # Pod anti-affinity to ensure MongoDB pods are spread across different nodes
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: pod
+                    operator: In
+                    values:
+                      - mongo
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+        - name: mongo
+          image: mongo:latest
+          imagePullPolicy: Always
+          ports:
+            - name: mongo-port
+              containerPort: 27017
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: metafox-config
+            - secretRef:
+                name: metafox-secrets
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: MONGO_INITDB_ROOT_USERNAME
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: metafox-secrets
+                  key: mongo_root_password
+          volumeMounts:
+            - name: mongo-data
+              mountPath: /data/db
+            - name: mongo-config
+              mountPath: /data/configdb
+      volumes:
+        - name: mongo-data
+          emptyDir:
+            sizeLimit: "1Gi" # Optional, specify size limit for the emptyDir volume
+        - name: mongo-config
+          emptyDir:
+            sizeLimit: "1Gi" # Optional, specify size limit for the emptyDir volume
+      # Uncomment the resources section if resource limits are needed
+      # resources:
+      #   requests:
+      #     memory: "512Mi"
+      #     cpu: "250m"
+      #   limits:
+      #     memory: "1Gi"
+      #     cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+  namespace: nemo-svc
+spec:
+  selector:
+    app: nemo
+    type: backend
+    pod: mongo
+  ports:
+    - name: mongo-port
+      port: 27017
+      targetPort: 27017
+      nodePort: 30017 # Optional, if you want to expose it on a specific node port
+  type: NodePort # Change to NodePort or LoadBalancer if needed

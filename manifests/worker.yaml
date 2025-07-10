@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: nemo-svc
+  labels:
+    app: nemo
+    type: backend
+    pod: worker
+spec:
+  replicas: 4
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 1 # Ensure at least one pod is always available
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      pod: worker
+  template:
+    metadata:
+      labels:
+        app: nemo
+        type: backend
+        pod: worker
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: pod
+                      operator: In
+                      values:
+                        - worker
+                topologyKey: "kubernetes.io/hostname"
+      containers:
+        - name: worker
+          image: drashkko/metafox-worker:latest
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: metafox-config
+            - secretRef:
+                name: metafox-secrets
+          env:
+            - name: BROKER_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: BROKER_URL
+            - name: RESULT_BACKEND
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: RESULT_BACKEND
+            - name: WORKER_CONCURRENCY
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: WORKER_CONCURRENCY
+            - name: MONGO_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: MONGO_DB
+            - name: MONGO_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: MONGO_URI
+            - name: MONGO_COLLECTION_TASK_META
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: MONGO_COLLECTION_TASK_META
+            - name: MONGO_COLLECTION_AUTOML_JOB_DETAILS
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: MONGO_COLLECTION_AUTOML_JOB_DETAILS
+            - name: MONGO_COLLECTION_TASK_INFO
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: MONGO_COLLECTION_TASK_INFO
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: REDIS_PORT
+            - name: REDIS_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: REDIS_DB
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: metafox-secrets
+                  key: redis_password

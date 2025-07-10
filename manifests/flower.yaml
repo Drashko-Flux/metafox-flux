@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flower-api
+  namespace: nemo-svc
+  labels:
+    app: nemo
+    type: backend
+    deployment: flower
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 1 # Ensure at least one pod is always available
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      pod: flower-api
+  template:
+    metadata:
+      labels:
+        app: nemo
+        type: backend
+        pod: flower-api
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: pod
+                    operator: In
+                    values:
+                      - flower-api
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+        - name: flower-api
+          image: mher/flower:latest
+          imagePullPolicy: Always
+          ports:
+            - name: flower-port
+              containerPort: 5555
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: metafox-config
+            - secretRef:
+                name: metafox-secrets
+          env:
+            - name: BROKER_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: BROKER_URL
+            - name: RESULT_BACKEND
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: RESULT_BACKEND
+            - name: FLOWER_PERSISTENT
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: FLOWER_PERSISTENT
+            - name: FLOWER_STATE_SAVE_INTERVAL
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: FLOWER_STATE_SAVE_INTERVAL
+            - name: FLOWER_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: FLOWER_DB
+            - name: FLOWER_BASIC_AUTH
+              valueFrom:
+                secretKeyRef:
+                  name: metafox-secrets
+                  key: flower_basic_auth
+          volumeMounts:
+            - name: flower-data
+              mountPath: /data
+      volumes:
+        - name: flower-data
+          emptyDir:
+            sizeLimit: "1Gi" # Optional, specify size limit for the emptyDir volume
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flower-service
+  namespace: nemo-svc
+  labels:
+    app: nemo
+    type: backend
+    service: flower
+spec:
+  selector:
+    app: nemo
+    type: backend
+    pod: flower-api
+  ports:
+  - port: 5555
+    targetPort: flower-port
+    protocol: TCP
+    nodePort: 30510
+  type: NodePort

@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  namespace: nemo-svc
+  labels:
+    app: nemo
+    type: backend
+    deployment: rabbitmq
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 1 # Ensure at least one pod is always available
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      pod: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: nemo
+        type: backend
+        pod: rabbitmq
+    spec:
+      # Pod anti-affinity to ensure RabbitMQ pods are spread across different nodes
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: pod
+                    operator: In
+                    values:
+                      - rabbitmq
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:management
+          imagePullPolicy: Always
+          ports:
+            - name: rabbitmq-port
+              containerPort: 5672
+              protocol: TCP
+            - name: management-port
+              containerPort: 15672
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: metafox-config
+            - secretRef:
+                name: metafox-secrets
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: RABBITMQ_DEFAULT_USER
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: metafox-secrets
+                  key: rabbitmq_default_pass
+          volumeMounts:
+            - name: rabbitmq-data
+              mountPath: /var/lib/rabbitmq
+            - name: rabbitmq-logs
+              mountPath: /var/log/rabbitmq
+      volumes:
+        - name: rabbitmq-data
+          emptyDir:
+            sizeLimit: "10Gi"
+        - name: rabbitmq-logs
+          emptyDir:
+            sizeLimit: "1Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-backend-service
+  namespace: nemo-svc
+  labels:
+    app: nemo
+    type: backend
+    service: rabbitmq
+spec:
+  selector:
+    app: nemo
+    type: backend
+    pod: rabbitmq
+  ports:
+    - name: rabbitmq-port
+      port: 5672
+      targetPort: 5672
+      protocol: TCP
+      nodePort: 30503
+    - name: management-port
+      port: 15672
+      targetPort: 15672
+      protocol: TCP
+      nodePort: 30504
+  type: NodePort

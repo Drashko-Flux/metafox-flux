@@ -1,0 +1,196 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: nemo-svc
+  labels:
+    app: nemo
+    type: backend
+    deployment: api
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 1 # Ensure at least one pod is always available
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      pod: api
+  template:
+    metadata:
+      labels:
+        app: nemo
+        type: backend
+        pod: api
+    spec:
+      # Pod anti-affinity to ensure API pods are spread across different nodes
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: pod
+                    operator: In
+                    values:
+                      - api
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+        - name: api
+          image: drashkko/metafox-api:latest
+          imagePullPolicy: Always
+          ports:
+            - name: api-port
+              containerPort: 8000
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: metafox-config
+            - secretRef:
+                name: metafox-secrets
+          env:
+            - name: BROKER_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: BROKER_URL
+            - name: RESULT_BACKEND
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: RESULT_BACKEND
+            - name: WORKER_CONCURRENCY
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: WORKER_CONCURRENCY
+            - name: KEYCLOAK_SERVER_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: KEYCLOAK_SERVER_URL
+            - name: KEYCLOAK_CLIENT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: KEYCLOAK_CLIENT_ID
+            - name: KEYCLOAK_REALM_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: KEYCLOAK_REALM_NAME
+            - name: KEYCLOAK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: metafox-secrets
+                  key: keycloak_client_secret
+            - name: KEYCLOAK_AUTHORIZATION_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: KEYCLOAK_AUTHORIZATION_URL
+            - name: KEYCLOAK_TOKEN_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: KEYCLOAK_TOKEN_URL
+            - name: KEYCLOAK_REFRESH_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: KEYCLOAK_REFRESH_URL
+            - name: CORS_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: CORS_ORIGINS
+            - name: API_AUTH_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: API_AUTH_ENABLED
+            - name: API_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: API_ORIGINS
+            - name: API_ALLOW_CREDENTIALS
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: API_ALLOW_CREDENTIALS
+            - name: API_ALLOW_METHODS
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: API_ALLOW_METHODS
+            - name: API_ALLOW_HEADERS
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: API_ALLOW_HEADERS
+            - name: MONGO_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: MONGO_URI
+            - name: MONGO_COLLECTION_TASK_META
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: MONGO_COLLECTION_TASK_META
+            - name: MONGO_COLLECTION_AUTOML_JOB_DETAILS
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: MONGO_COLLECTION_AUTOML_JOB_DETAILS
+            - name: MONGO_COLLECTION_TASK_INFO
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: MONGO_COLLECTION_TASK_INFO
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: REDIS_PORT
+            - name: REDIS_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: REDIS_DB
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: metafox-secrets
+                  key: redis_password
+          ports:
+            - name: api-port
+              containerPort: 8000
+              protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-service
+  namespace: nemo-svc
+  labels:
+    app: nemo
+    type: backend
+    service: api
+spec:
+  selector:
+    app: nemo
+    type: backend
+    pod: api
+  ports:
+    - name: api-port
+      port: 8000
+      targetPort: 8000
+      protocol: TCP
+      nodePort: 30080 # Optional, specify if you want to expose the service on a specific node port
+  type: NodePort # Optional, specify if you want to expose the service on a specific

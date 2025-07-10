@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: metafox-config
+  namespace: nemo-svc
+data:
+  BROKER_URL: "pyamqp://ceramo:metafox_2025@rabbitmq-backend-service.nemo-svc.svc.cluster.local:5672//"
+  RESULT_BACKEND: "redis://:metafox_2025@redis-backend-service.nemo-svc.svc.cluster.local:6379/0"
+  WORKER_CONCURRENCY: "1"
+  KEYCLOAK_SERVER_URL: ""
+  KEYCLOAK_CLIENT_ID: ""
+  KEYCLOAK_REALM_NAME: ""
+  KEYCLOAK_CLIENT_SECRET: ""
+  KEYCLOAK_AUTHORIZATION_URL: ""
+  KEYCLOAK_TOKEN_URL: ""
+  KEYCLOAK_REFRESH_URL: ""
+  CORS_ORIGINS: ""
+  API_AUTH_ENABLED: "False"
+  API_ORIGINS: ""
+  API_ALLOW_CREDENTIALS: "True"
+  API_ALLOW_METHODS: "*"
+  API_ALLOW_HEADERS: "*"
+  MONGO_DB: "metafox"
+  MONGO_URI: "mongodb://ceramo:metafox_2025@mongo-backend-service.nemo-svc.svc.cluster.local:27017"
+  MONGO_COLLECTION_TASK_META: "task_meta"
+  MONGO_COLLECTION_AUTOML_JOB_DETAILS: "automl_job_details"
+  MONGO_COLLECTION_TASK_INFO: "task_info"
+  REDIS_HOST: "redis-backend-service.nemo-svc.svc.cluster.local"
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+  DB_TYPE: "redis"
+  FLOWER_PERSISTENT: "True"
+  FLOWER_STATE_SAVE_INTERVAL: "10000"
+  FLOWER_DB: "flower_db"
+  MONGO_INITDB_ROOT_USERNAME: "ceramo"
+  RABBITMQ_DEFAULT_USER: "ceramo"
