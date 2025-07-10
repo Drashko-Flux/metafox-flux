@@ -50,12 +50,8 @@ spec:
             seccompProfile:
               type: RuntimeDefault
           volumeMounts:
-            - name: logs-volume
-              mountPath: /usr/src/metafox_worker/logs
-            - name: checkpoints-volume
-              mountPath: /usr/src/metafox_worker/checkpoints
-            - name: exported-models-volume
-              mountPath: /usr/src/metafox_worker/exported_models
+            - name: metafox-worker-volume
+              mountPath: /usr/src/metafox_worker
             - name: temp-volume
               mountPath: /tmp
           envFrom:
@@ -130,11 +126,7 @@ spec:
                   name: metafox-config
                   key: DB_TYPE
       volumes:
-        - name: logs-volume
-          emptyDir: {}
-        - name: checkpoints-volume
-          emptyDir: {}
-        - name: exported-models-volume
+        - name: metafox-worker-volume
           emptyDir: {}
         - name: temp-volume
           emptyDir: {}
