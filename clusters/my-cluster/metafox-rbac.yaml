@@ -1,0 +1,36 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: metafox-kustomize-controller
+  namespace: flux-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: nemo-svc
+  name: metafox-manager
+rules:
+- apiGroups: [""]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: ["apps"]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: ["extensions"]
+  resources: ["*"]
+  verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: metafox-manager
+  namespace: nemo-svc
+subjects:
+- kind: ServiceAccount
+  name: kustomize-controller
+  namespace: flux-system
+roleRef:
+  kind: Role
+  name: metafox-manager
+  apiGroup: rbac.authorization.k8s.io
