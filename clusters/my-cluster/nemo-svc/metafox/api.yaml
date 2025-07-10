@@ -182,6 +182,16 @@ spec:
                 configMapKeyRef:
                   name: metafox-config
                   key: DB_TYPE
+          volumeMounts:
+            - name: metafox-api-volume
+              mountPath: /usr/src/metafox_api/metafox_api
+            - name: temp-volume
+              mountPath: /tmp
+      volumes:
+        - name: metafox-api-volume
+          emptyDir: {} # Use emptyDir for temporary storage, or specify a persistent volume if needed
+        - name: temp-volume
+          emptyDir: {} # Temporary volume for /tmp directory
 ---
 apiVersion: v1
 kind: Service
