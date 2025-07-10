@@ -1,0 +1,14 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: metafox-app
+  namespace: flux-system
+spec:
+  interval: 5m0s
+  path: ./clusters/my-cluster/nemo-svc/metafox
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  targetNamespace: nemo-svc
