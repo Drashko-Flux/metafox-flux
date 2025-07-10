@@ -185,11 +185,15 @@ spec:
           volumeMounts:
             - name: metafox-api-volume
               mountPath: /usr/src/metafox_api/metafox_api
+            - name: metafox-api-bentoml
+              mountPath: /bentoml
             - name: temp-volume
               mountPath: /tmp
       volumes:
         - name: metafox-api-volume
           emptyDir: {} # Use emptyDir for temporary storage, or specify a persistent volume if needed
+        - name: metafox-api-bentoml
+          emptyDir: {} # Use emptyDir for bentoml storage, or specify a persistent
         - name: temp-volume
           emptyDir: {} # Temporary volume for /tmp directory
 ---
