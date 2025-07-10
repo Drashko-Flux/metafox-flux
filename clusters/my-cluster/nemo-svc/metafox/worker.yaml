@@ -49,11 +49,6 @@ spec:
                 - ALL
             seccompProfile:
               type: RuntimeDefault
-          volumeMounts:
-            - name: metafox-worker-volume
-              mountPath: /usr/src/metafox_worker
-            - name: temp-volume
-              mountPath: /tmp
           envFrom:
             - configMapRef:
                 name: metafox-config
@@ -125,8 +120,3 @@ spec:
                 configMapKeyRef:
                   name: metafox-config
                   key: DB_TYPE
-      volumes:
-        - name: metafox-worker-volume
-          emptyDir: {}
-        - name: temp-volume
-          emptyDir: {}
