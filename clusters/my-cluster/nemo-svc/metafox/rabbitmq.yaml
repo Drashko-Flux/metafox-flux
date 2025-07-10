@@ -38,6 +38,15 @@ spec:
         - name: rabbitmq
           image: rabbitmq:management
           imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
           ports:
             - name: rabbitmq-port
               containerPort: 5672

@@ -38,6 +38,15 @@ spec:
         - name: mongo
           image: mongo:latest
           imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: false
+            runAsUser: 999
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
           ports:
             - name: mongo-port
               containerPort: 27017

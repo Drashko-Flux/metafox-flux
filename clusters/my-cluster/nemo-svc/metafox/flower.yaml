@@ -37,6 +37,15 @@ spec:
         - name: flower-api
           image: mher/flower:latest
           imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
           ports:
             - name: flower-port
               containerPort: 5555
