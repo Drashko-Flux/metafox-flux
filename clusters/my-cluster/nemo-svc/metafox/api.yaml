@@ -177,6 +177,11 @@ spec:
                 secretKeyRef:
                   name: metafox-secrets
                   key: redis_password
+            - name: DB_TYPE
+              valueFrom:
+                configMapKeyRef:
+                  name: metafox-config
+                  key: DB_TYPE
 ---
 apiVersion: v1
 kind: Service
